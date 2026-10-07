@@ -7,11 +7,11 @@ interface LogoProps {
 }
 
 export function WorklyLogo({ size = 'md', showText = true, className = '' }: LogoProps) {
-  const iconSizes = {
-    sm: 'w-6 h-6',
-    md: 'w-8 h-8',
-    lg: 'w-10 h-10',
-    xl: 'w-12 h-12',
+  const pixelSizes = {
+    sm: 24,
+    md: 32,
+    lg: 40,
+    xl: 48,
   };
 
   const textSizes = {
@@ -21,18 +21,26 @@ export function WorklyLogo({ size = 'md', showText = true, className = '' }: Log
     xl: 'text-3xl',
   };
 
+  const px = pixelSizes[size];
+
   return (
-    <div className={`flex items-center gap-2.5 font-bold tracking-tight select-none ${className}`}>
-      <div className={`relative ${iconSizes[size]} flex items-center justify-center`}>
+    <div className={`inline-flex items-center gap-2.5 font-bold tracking-tight select-none shrink-0 ${className}`}>
+      <div
+        className="relative flex items-center justify-center shrink-0"
+        style={{ width: `${px}px`, height: `${px}px`, minWidth: `${px}px`, minHeight: `${px}px` }}
+      >
         {/* Glowing background effect */}
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 rounded-xl blur-[3px] opacity-70 animate-pulse" />
         
         {/* Main Logo Emblem */}
         <svg
+          width={px}
+          height={px}
           viewBox="0 0 40 40"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="relative w-full h-full rounded-xl shadow-lg drop-shadow-[0_4px_12px_rgba(99,102,241,0.4)]"
+          className="relative block rounded-xl shadow-lg drop-shadow-[0_4px_12px_rgba(99,102,241,0.4)] shrink-0"
+          style={{ width: `${px}px`, height: `${px}px` }}
         >
           <rect width="40" height="40" rx="10" fill="#090d16" />
           <rect width="40" height="40" rx="10" stroke="url(#logo_grad_border)" strokeWidth="1.5" />
@@ -70,7 +78,7 @@ export function WorklyLogo({ size = 'md', showText = true, className = '' }: Log
       </div>
 
       {showText && (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <span className={`font-extrabold ${textSizes[size]} bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-indigo-200 tracking-tight`}>
             Workly
           </span>
