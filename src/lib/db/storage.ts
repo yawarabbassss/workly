@@ -3,10 +3,12 @@ import path from 'path';
 import { Workflow, Template, WorkflowDefinition } from '../types/workflow';
 import { WorkflowExecution, NodeExecutionRecord, ExecutionFilter } from '../types/execution';
 import { Credential } from '../types/integration';
+import { UserProfile, SubscriptionPlan, MODEL_CREDIT_COSTS, PLAN_LIMITS } from '../types/user';
 import { generateWebhookToken } from '../engine/crypto';
+import { supabaseAdmin, isSupabaseConfigured } from './supabase';
 
 interface StorageData {
-  users: Array<{ id: string; email: string; fullName: string; createdAt: string }>;
+  users: UserProfile[];
   workflows: Workflow[];
   executions: WorkflowExecution[];
   credentials: Credential[];
@@ -20,7 +22,7 @@ const DEFAULT_TEMPLATES: Template[] = [
   {
     id: 'tpl_lead_qualification',
     name: 'AI Lead Qualification & CRM Sync',
-    description: 'Receives new leads via Webhook, analyzes buyer intent with Grok AI, evaluates qualification score, and routes high-value prospects.',
+    description: 'Receives new leads via Webhook, analyzes buyer intent with Grok/Claude/GPT AI, evaluates score, and routes high-value prospects.',
     category: 'Sales & Marketing',
     icon: 'Sparkles',
     tags: ['Webhook', 'Grok AI', 'Condition', 'Email', 'CRM'],
@@ -42,7 +44,7 @@ const DEFAULT_TEMPLATES: Template[] = [
           type: 'customNode',
           position: { x: 300, y: 180 },
           data: {
-            label: 'Grok Lead Intelligence',
+            label: 'AI Lead Intelligence',
             type: 'grok_ai',
             description: 'Analyzes intent, budget, and readiness to buy',
             config: {
@@ -78,7 +80,7 @@ const DEFAULT_TEMPLATES: Template[] = [
             config: {
               to: 'sales@yourcompany.com',
               subject: '🔥 Qualified Enterprise Lead: {{trigger.name}} (Score: {{node_ai_analyze.score}})',
-              body: 'A high-value lead was qualified by Grok AI!\n\nLead Name: {{trigger.name}}\nEmail: {{trigger.email}}\nCompany: {{trigger.company}}\nAI Reasoning: {{node_ai_analyze.reason}}\nScore: {{node_ai_analyze.score}}/100'
+              body: 'A high-value lead was qualified by AI!\n\nLead Name: {{trigger.name}}\nEmail: {{trigger.email}}\nCompany: {{trigger.company}}\nAI Reasoning: {{node_ai_analyze.reason}}\nScore: {{node_ai_analyze.score}}/100'
             }
           }
         },
@@ -113,7 +115,7 @@ const DEFAULT_TEMPLATES: Template[] = [
     description: 'Classifies customer support tickets into Urgent, Technical, or Billing categories and triggers appropriate escalations.',
     category: 'Support & Ops',
     icon: 'Headphones',
-    tags: ['Grok AI', 'HTTP Action', 'Condition', 'Routing'],
+    tags: ['AI Node', 'HTTP Action', 'Condition', 'Routing'],
     definition: {
       nodes: [
         {
@@ -132,7 +134,7 @@ const DEFAULT_TEMPLATES: Template[] = [
           type: 'customNode',
           position: { x: 300, y: 190 },
           data: {
-            label: 'Grok Urgency Classifier',
+            label: 'AI Urgency Classifier',
             type: 'grok_ai',
             description: 'Categorizes issue urgency (Urgent / Standard / Low)',
             config: {
@@ -168,7 +170,7 @@ const DEFAULT_TEMPLATES: Template[] = [
             config: {
               to: 'oncall-urgent@yourcompany.com',
               subject: '🚨 URGENT Customer Issue: {{trigger.subject}}',
-              body: 'Urgent ticket detected by Grok AI!\n\nCustomer: {{trigger.customer}}\nCategory: {{node_ai_classify.department}}\nSummary: {{node_ai_classify.summary}}'
+              body: 'Urgent ticket detected by AI!\n\nCustomer: {{trigger.customer}}\nCategory: {{node_ai_classify.department}}\nSummary: {{node_ai_classify.summary}}'
             }
           }
         }
@@ -179,73 +181,8 @@ const DEFAULT_TEMPLATES: Template[] = [
         { id: 'e3', source: 'node_cond_urgent', target: 'node_email_pager', label: 'Urgent', sourceHandle: 'true' }
       ]
     }
-  },
-  {
-    id: 'tpl_content_distributor',
-    name: 'AI Content Repurposer & Publisher',
-    description: 'Takes a blog post or release announcement, generates social summaries via Grok, and pushes to external webhook endpoints.',
-    category: 'Marketing',
-    icon: 'Share2',
-    tags: ['Grok AI', 'HTTP Request', 'Content'],
-    definition: {
-      nodes: [
-        {
-          id: 'node_trigger',
-          type: 'customNode',
-          position: { x: 300, y: 50 },
-          data: {
-            label: 'Manual / Scheduled Trigger',
-            type: 'manual_trigger',
-            description: 'Trigger manually with new article text',
-            config: {}
-          }
-        },
-        {
-          id: 'node_ai_draft',
-          type: 'customNode',
-          position: { x: 300, y: 190 },
-          data: {
-            label: 'Grok Social Generator',
-            type: 'grok_ai',
-            description: 'Generates concise LinkedIn & X posts with hashtags',
-            config: {
-              model: 'grok-2-latest',
-              prompt: 'Generate 3 social media snippets for this article:\nTitle: {{trigger.title}}\nContent: {{trigger.content}}\n\nOutput JSON with fields: tweet, linkedin_post, key_takeaway',
-              temperature: 0.7
-            }
-          }
-        },
-        {
-          id: 'node_http_publish',
-          type: 'customNode',
-          position: { x: 300, y: 340 },
-          data: {
-            label: 'Publish Webhook Broadcast',
-            type: 'http_request',
-            description: 'Sends generated snippets to publishing buffer',
-            config: {
-              method: 'POST',
-              url: 'https://httpbin.org/post',
-              headers: { 'Content-Type': 'application/json' },
-              body: '{\n  "tweet": "{{node_ai_draft.tweet}}",\n  "linkedin": "{{node_ai_draft.linkedin_post}}",\n  "status": "ready"\n}'
-            }
-          }
-        }
-      ],
-      edges: [
-        { id: 'e1', source: 'node_trigger', target: 'node_ai_draft' },
-        { id: 'e2', source: 'node_ai_draft', target: 'node_http_publish' }
-      ]
-    }
   }
 ];
-
-const DEMO_USER = {
-  id: 'usr_demo_workly_001',
-  email: 'demo@workly.ai',
-  fullName: 'Alex Vance',
-  createdAt: new Date().toISOString()
-};
 
 class StorageEngine {
   private inMemoryCache: StorageData | null = null;
@@ -257,152 +194,11 @@ class StorageEngine {
       }
       if (!fs.existsSync(DATA_FILE)) {
         const initialData: StorageData = {
-          users: [DEMO_USER],
-          workflows: [
-            {
-              id: 'wf_lead_qualifier_demo',
-              userId: DEMO_USER.id,
-              name: 'AI Lead Qualification & Outreach',
-              description: 'Processes incoming leads, evaluates with Grok 2, and sends personalized responses.',
-              isActive: true,
-              status: 'active',
-              webhookToken: 'wh_lead_demo_sample_token_8899',
-              definition: DEFAULT_TEMPLATES[0].definition,
-              createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-              updatedAt: new Date(Date.now() - 3600000).toISOString(),
-            },
-            {
-              id: 'wf_support_triage_demo',
-              userId: DEMO_USER.id,
-              name: 'VIP Ticket Escalation Engine',
-              description: 'Classifies urgent customer requests and triggers immediate on-call dispatch.',
-              isActive: true,
-              status: 'active',
-              webhookToken: 'wh_support_triage_token_1234',
-              definition: DEFAULT_TEMPLATES[1].definition,
-              createdAt: new Date(Date.now() - 86400000).toISOString(),
-              updatedAt: new Date(Date.now() - 7200000).toISOString(),
-            }
-          ],
-          executions: [
-            {
-              id: 'exec_sample_01',
-              workflowId: 'wf_lead_qualifier_demo',
-              workflowName: 'AI Lead Qualification & Outreach',
-              userId: DEMO_USER.id,
-              status: 'SUCCESS',
-              triggerType: 'webhook',
-              triggerPayload: {
-                name: 'Sarah Connor',
-                email: 'sarah@cyberdyne-sys.com',
-                company: 'Cyberdyne Systems',
-                message: 'We are looking to automate our fleet operations across 50 locations.'
-              },
-              startedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-              completedAt: new Date(Date.now() - 3600000 * 2 + 1850).toISOString(),
-              durationMs: 1850,
-              nodeExecutions: [
-                {
-                  id: 'nexec_01',
-                  executionId: 'exec_sample_01',
-                  workflowId: 'wf_lead_qualifier_demo',
-                  nodeId: 'node_trigger',
-                  nodeName: 'Webhook Lead Ingestion',
-                  nodeType: 'webhook_trigger',
-                  status: 'SUCCESS',
-                  inputData: {},
-                  outputData: {
-                    name: 'Sarah Connor',
-                    email: 'sarah@cyberdyne-sys.com',
-                    company: 'Cyberdyne Systems',
-                    message: 'We are looking to automate our fleet operations across 50 locations.'
-                  },
-                  startedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-                  completedAt: new Date(Date.now() - 3600000 * 2 + 50).toISOString(),
-                  durationMs: 50,
-                  retryCount: 0
-                },
-                {
-                  id: 'nexec_02',
-                  executionId: 'exec_sample_01',
-                  workflowId: 'wf_lead_qualifier_demo',
-                  nodeId: 'node_ai_analyze',
-                  nodeName: 'Grok Lead Intelligence',
-                  nodeType: 'grok_ai',
-                  status: 'SUCCESS',
-                  inputData: { prompt: 'Analyze this sales lead: Sarah Connor...' },
-                  outputData: {
-                    score: 95,
-                    qualified: true,
-                    priority: 'high',
-                    reason: 'Enterprise prospect requesting multi-location automation rollout with high purchasing intent.'
-                  },
-                  startedAt: new Date(Date.now() - 3600000 * 2 + 55).toISOString(),
-                  completedAt: new Date(Date.now() - 3600000 * 2 + 1200).toISOString(),
-                  durationMs: 1145,
-                  retryCount: 0
-                },
-                {
-                  id: 'nexec_03',
-                  executionId: 'exec_sample_01',
-                  workflowId: 'wf_lead_qualifier_demo',
-                  nodeId: 'node_condition',
-                  nodeName: 'Check If Qualified',
-                  nodeType: 'condition',
-                  status: 'SUCCESS',
-                  inputData: { field: true, target: true },
-                  outputData: { matched: true, branch: 'true' },
-                  startedAt: new Date(Date.now() - 3600000 * 2 + 1205).toISOString(),
-                  completedAt: new Date(Date.now() - 3600000 * 2 + 1210).toISOString(),
-                  durationMs: 5,
-                  retryCount: 0
-                },
-                {
-                  id: 'nexec_04',
-                  executionId: 'exec_sample_01',
-                  workflowId: 'wf_lead_qualifier_demo',
-                  nodeId: 'node_email_notify',
-                  nodeName: 'Notify Sales Team',
-                  nodeType: 'send_email',
-                  status: 'SUCCESS',
-                  inputData: { to: 'sales@yourcompany.com', subject: '🔥 Qualified Enterprise Lead: Sarah Connor' },
-                  outputData: { dispatched: true, recipient: 'sales@yourcompany.com', timestamp: new Date().toISOString() },
-                  startedAt: new Date(Date.now() - 3600000 * 2 + 1215).toISOString(),
-                  completedAt: new Date(Date.now() - 3600000 * 2 + 1550).toISOString(),
-                  durationMs: 335,
-                  retryCount: 0
-                },
-                {
-                  id: 'nexec_05',
-                  executionId: 'exec_sample_01',
-                  workflowId: 'wf_lead_qualifier_demo',
-                  nodeId: 'node_sync_crm',
-                  nodeName: 'Sync to CRM Webhook',
-                  nodeType: 'http_request',
-                  status: 'SUCCESS',
-                  inputData: { method: 'POST', url: 'https://httpbin.org/post' },
-                  outputData: { status: 200, statusText: 'OK', data: { success: true } },
-                  startedAt: new Date(Date.now() - 3600000 * 2 + 1555).toISOString(),
-                  completedAt: new Date(Date.now() - 3600000 * 2 + 1850).toISOString(),
-                  durationMs: 295,
-                  retryCount: 0
-                }
-              ]
-            }
-          ],
-          credentials: [
-            {
-              id: 'cred_grok_default',
-              userId: DEMO_USER.id,
-              name: 'xAI Grok Default Server Key',
-              type: 'grok',
-              encryptedData: 'internal_configured',
-              isValid: true,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          ],
-          templates: DEFAULT_TEMPLATES
+          users: [],
+          workflows: [],
+          executions: [],
+          credentials: [],
+          templates: DEFAULT_TEMPLATES,
         };
         fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2), 'utf8');
       }
@@ -425,7 +221,7 @@ class StorageEngine {
     
     if (!this.inMemoryCache) {
       this.inMemoryCache = {
-        users: [DEMO_USER],
+        users: [],
         workflows: [],
         executions: [],
         credentials: [],
@@ -445,37 +241,136 @@ class StorageEngine {
     }
   }
 
-  // USER / AUTH
-  getUsers() {
+  // ==========================================
+  // USERS & AUTHENTICATION
+  // ==========================================
+  getUsers(): UserProfile[] {
     return this.readData().users;
   }
 
-  getUserById(id: string) {
+  getUserById(id: string): UserProfile | null {
     return this.readData().users.find(u => u.id === id) || null;
   }
 
-  getUserByEmail(email: string) {
+  getUserByEmail(email: string): UserProfile | null {
     return this.readData().users.find(u => u.email.toLowerCase() === email.toLowerCase()) || null;
   }
 
-  createUser(user: { id?: string; email: string; fullName: string }) {
+  createUser(user: { id?: string; email: string; fullName?: string; subscriptionPlan?: SubscriptionPlan }): UserProfile {
     const data = this.readData();
-    const newUser = {
+    const plan = user.subscriptionPlan || 'free';
+    const newUser: UserProfile = {
       id: user.id || `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       email: user.email,
       fullName: user.fullName || user.email.split('@')[0],
+      subscriptionPlan: plan,
+      aiCreditsUsed: 0,
+      aiCreditsTotal: plan === 'premium' ? 1000 : 0,
       createdAt: new Date().toISOString(),
     };
     data.users.push(newUser);
     this.writeData(data);
+
+    // Sync to Supabase if configured
+    if (isSupabaseConfigured() && supabaseAdmin) {
+      Promise.resolve(
+        supabaseAdmin.from('profiles').upsert({
+          id: newUser.id,
+          email: newUser.email,
+          full_name: newUser.fullName,
+          subscription_plan: newUser.subscriptionPlan,
+          ai_credits_used: newUser.aiCreditsUsed,
+          ai_credits_total: newUser.aiCreditsTotal,
+        })
+      ).catch(err => console.warn('Supabase profile sync error:', err));
+    }
+
     return newUser;
   }
 
+  updateUserSubscription(userId: string, plan: SubscriptionPlan, stripeData?: { customerId?: string; subscriptionId?: string }): UserProfile | null {
+    const data = this.readData();
+    const index = data.users.findIndex(u => u.id === userId);
+    if (index === -1) return null;
+
+    data.users[index].subscriptionPlan = plan;
+    data.users[index].aiCreditsTotal = plan === 'premium' ? 1000 : 0;
+    if (stripeData?.customerId) data.users[index].stripeCustomerId = stripeData.customerId;
+    if (stripeData?.subscriptionId) data.users[index].stripeSubscriptionId = stripeData.subscriptionId;
+
+    this.writeData(data);
+    return data.users[index];
+  }
+
+  consumeAICredits(userId: string, model: string): { allowed: boolean; remaining: number; consumed: number; error?: string } {
+    const user = this.getUserById(userId);
+    if (!user) return { allowed: false, remaining: 0, consumed: 0, error: 'User not found' };
+
+    // 1. Free plan has NO AI capabilities
+    if (user.subscriptionPlan === 'free') {
+      return {
+        allowed: false,
+        remaining: 0,
+        consumed: 0,
+        error: 'AI automations and AI Workflow Builder are not available on the Free plan. Please upgrade to Pro or Premium.',
+      };
+    }
+
+    // 2. Pro plan uses their own BYOK keys (unlimited managed credits)
+    if (user.subscriptionPlan === 'pro') {
+      return { allowed: true, remaining: 999999, consumed: 0 };
+    }
+
+    // 3. Premium plan uses Workly managed keys with credit limits
+    const cost = MODEL_CREDIT_COSTS[model] || 2;
+    const remaining = user.aiCreditsTotal - user.aiCreditsUsed;
+
+    if (remaining < cost) {
+      return {
+        allowed: false,
+        remaining,
+        consumed: 0,
+        error: `Insufficient AI credits (${remaining} left, ${cost} required for ${model}). Reset or add your own API key in Pro plan.`,
+      };
+    }
+
+    const data = this.readData();
+    const index = data.users.findIndex(u => u.id === userId);
+    if (index !== -1) {
+      data.users[index].aiCreditsUsed += cost;
+      this.writeData(data);
+    }
+
+    return {
+      allowed: true,
+      remaining: remaining - cost,
+      consumed: cost,
+    };
+  }
+
+  deleteUser(userId: string): boolean {
+    const data = this.readData();
+    data.users = data.users.filter(u => u.id !== userId);
+    data.workflows = data.workflows.filter(w => w.userId !== userId);
+    data.executions = data.executions.filter(e => e.userId !== userId);
+    data.credentials = data.credentials.filter(c => c.userId !== userId);
+    this.writeData(data);
+
+    if (isSupabaseConfigured() && supabaseAdmin) {
+      Promise.resolve(
+        supabaseAdmin.from('profiles').delete().eq('id', userId)
+      ).catch(err => console.warn('Supabase user delete error:', err));
+    }
+    return true;
+  }
+
+  // ==========================================
   // WORKFLOWS
+  // ==========================================
   getWorkflows(userId?: string): Workflow[] {
     const list = this.readData().workflows;
     if (userId) {
-      return list.filter(w => w.userId === userId || w.userId === DEMO_USER.id);
+      return list.filter(w => w.userId === userId);
     }
     return list;
   }
@@ -495,10 +390,19 @@ class StorageEngine {
     isActive?: boolean;
     definition?: WorkflowDefinition;
   }): Workflow {
+    const user = this.getUserById(workflowData.userId);
+    const plan = user?.subscriptionPlan || 'free';
+    const limit = PLAN_LIMITS[plan].maxWorkflows;
+
+    const userWorkflows = this.getWorkflows(workflowData.userId);
+    if (userWorkflows.length >= limit) {
+      throw new Error(`Plan limit reached: ${PLAN_LIMITS[plan].name} plan allows up to ${limit} active workflows. Please upgrade to create more.`);
+    }
+
     const data = this.readData();
     const newWorkflow: Workflow = {
       id: `wf_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      userId: workflowData.userId || DEMO_USER.id,
+      userId: workflowData.userId,
       name: workflowData.name,
       description: workflowData.description || '',
       isActive: workflowData.isActive ?? false,
@@ -568,7 +472,9 @@ class StorageEngine {
     });
   }
 
+  // ==========================================
   // EXECUTIONS
+  // ==========================================
   getExecutions(filter?: ExecutionFilter): { executions: WorkflowExecution[]; total: number } {
     const data = this.readData();
     let list = [...data.executions];
@@ -580,7 +486,6 @@ class StorageEngine {
       list = list.filter(e => e.status === filter.status);
     }
 
-    // Sort descending by startedAt
     list.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
 
     const total = list.length;
@@ -654,12 +559,19 @@ class StorageEngine {
     return record;
   }
 
-  // CREDENTIALS
+  // ==========================================
+  // CREDENTIALS (BYOK)
+  // ==========================================
   getCredentials(userId: string): Credential[] {
-    return this.readData().credentials.filter(c => c.userId === userId || c.userId === DEMO_USER.id);
+    return this.readData().credentials.filter(c => c.userId === userId);
   }
 
   saveCredential(cred: { userId: string; name: string; type: string; encryptedData: string }): Credential {
+    const user = this.getUserById(cred.userId);
+    if (user?.subscriptionPlan === 'free') {
+      throw new Error('Custom API keys (BYOK) require a Pro or Premium subscription.');
+    }
+
     const data = this.readData();
     const newCred: Credential = {
       id: `cred_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -687,7 +599,9 @@ class StorageEngine {
     return false;
   }
 
+  // ==========================================
   // TEMPLATES
+  // ==========================================
   getTemplates(): Template[] {
     return this.readData().templates;
   }
@@ -696,11 +610,14 @@ class StorageEngine {
     return this.readData().templates.find(t => t.id === id) || null;
   }
 
+  // ==========================================
   // DASHBOARD STATS
+  // ==========================================
   getDashboardStats(userId?: string) {
     const data = this.readData();
-    const workflows = userId ? data.workflows.filter(w => w.userId === userId || w.userId === DEMO_USER.id) : data.workflows;
-    const executions = userId ? data.executions.filter(e => e.userId === userId || e.userId === DEMO_USER.id) : data.executions;
+    const workflows = userId ? data.workflows.filter(w => w.userId === userId) : data.workflows;
+    const executions = userId ? data.executions.filter(e => e.userId === userId) : data.executions;
+    const user = userId ? this.getUserById(userId) : null;
 
     const totalWorkflows = workflows.length;
     const activeWorkflows = workflows.filter(w => w.isActive).length;
@@ -720,6 +637,9 @@ class StorageEngine {
       successfulExecutions,
       failedExecutions,
       successRate,
+      subscriptionPlan: user?.subscriptionPlan || 'free',
+      aiCreditsUsed: user?.aiCreditsUsed || 0,
+      aiCreditsTotal: user?.aiCreditsTotal || 0,
       recentExecutions: executions.slice(0, 8),
       recentWorkflows: workflows.slice(0, 6),
     };

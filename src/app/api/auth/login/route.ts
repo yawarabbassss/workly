@@ -9,13 +9,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Email and password are required' }, { status: 400 });
     }
 
-    let user = db.getUserByEmail(email);
+    const user = db.getUserByEmail(email.trim());
     if (!user) {
-      // Auto-create or authenticate demo user for frictionless testing
-      user = db.createUser({
-        email,
-        fullName: email.split('@')[0],
-      });
+      return NextResponse.json(
+        { success: false, error: 'No account found with this email. Please create an account first.' },
+        { status: 404 }
+      );
     }
 
     const response = NextResponse.json({

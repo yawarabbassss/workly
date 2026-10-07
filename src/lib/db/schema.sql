@@ -5,12 +5,17 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. PROFILES TABLE
+-- 1. PROFILES / USERS TABLE (Includes Subscriptions & AI Credits)
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email TEXT NOT NULL UNIQUE,
     full_name TEXT,
     avatar_url TEXT,
+    subscription_plan TEXT DEFAULT 'free' NOT NULL, -- 'free', 'pro', 'premium'
+    ai_credits_used INTEGER DEFAULT 0 NOT NULL,
+    ai_credits_total INTEGER DEFAULT 0 NOT NULL, -- 0 for free/pro, 1000 for premium
+    stripe_customer_id TEXT,
+    stripe_subscription_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -30,7 +35,7 @@ CREATE TABLE IF NOT EXISTS public.workflows (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 3. WORKFLOW NODES TABLE (Relational view of nodes)
+-- 3. WORKFLOW NODES TABLE
 CREATE TABLE IF NOT EXISTS public.workflow_nodes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workflow_id UUID NOT NULL REFERENCES public.workflows(id) ON DELETE CASCADE,
@@ -90,12 +95,12 @@ CREATE TABLE IF NOT EXISTS public.node_executions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 7. CREDENTIALS TABLE (Encrypted secrets)
+-- 7. CREDENTIALS TABLE (Encrypted BYOK keys & secrets)
 CREATE TABLE IF NOT EXISTS public.credentials (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    type TEXT NOT NULL, -- grok, email, http_auth, slack, custom
+    type TEXT NOT NULL, -- grok, openai, anthropic, google, email, http_auth, custom
     encrypted_data TEXT NOT NULL,
     is_valid BOOLEAN DEFAULT true NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -113,7 +118,8 @@ CREATE TABLE IF NOT EXISTS public.scheduled_jobs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- INDEXES FOR MAXIMUM QUERY PERFORMANCE
+-- INDEXES FOR MAXIMUM PERFORMANCE
+CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
 CREATE INDEX IF NOT EXISTS idx_workflows_user_id ON public.workflows(user_id);
 CREATE INDEX IF NOT EXISTS idx_workflows_webhook_token ON public.workflows(webhook_token);
 CREATE INDEX IF NOT EXISTS idx_workflow_executions_workflow_id ON public.workflow_executions(workflow_id);
@@ -140,12 +146,14 @@ CREATE POLICY "Users can view own profile" ON public.profiles
     FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON public.profiles
     FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can delete own profile" ON public.profiles
+    FOR DELETE USING (auth.uid() = id);
 
 -- Workflows policies
 CREATE POLICY "Users can manage own workflows" ON public.workflows
     FOR ALL USING (auth.uid() = user_id);
 
--- Workflow executions policies
+-- Executions policies
 CREATE POLICY "Users can view own executions" ON public.workflow_executions
     FOR ALL USING (auth.uid() = user_id);
 

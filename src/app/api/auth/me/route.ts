@@ -5,11 +5,15 @@ import { cookies } from 'next/headers';
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get('workly_user_id')?.value || 'usr_demo_workly_001';
-    let user = db.getUserById(userId);
+    const userId = cookieStore.get('workly_user_id')?.value;
 
+    if (!userId) {
+      return NextResponse.json({ success: false, user: null }, { status: 401 });
+    }
+
+    const user = db.getUserById(userId);
     if (!user) {
-      user = db.getUserById('usr_demo_workly_001');
+      return NextResponse.json({ success: false, user: null }, { status: 401 });
     }
 
     return NextResponse.json({ success: true, user });
