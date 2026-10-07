@@ -6,7 +6,6 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { PLAN_LIMITS } from '@/lib/types/user';
 import {
   Sparkles,
   ArrowRight,
@@ -24,7 +23,6 @@ import {
   Layers,
   Lock,
   ChevronDown,
-  Check,
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -36,16 +34,16 @@ export default function LandingPage() {
       a: 'When you build and activate a workflow in Workly, our server-side engine registers unique webhook endpoints and background triggers. When your client or app sends data to the webhook, Workly executes every step automatically 24/7 (AI reasoning, conditional filters, REST HTTP requests, emails) without needing your browser open, and logs every step to the live audit history.',
     },
     {
-      q: 'What is the difference between the Free, Pro, and Premium plans?',
-      a: 'Free ($0/mo) includes 3 workflows and 100 runs for manual automations without AI. Pro ($10/mo) allows you to Bring Your Own Key (BYOK) for Grok, OpenAI, Claude, and Gemini with 50 workflows. Premium ($50/mo) includes fully managed cloud AI with 1,000 monthly credits where no API keys are required.',
-    },
-    {
-      q: 'How do the AI model credits work on the Premium plan?',
-      a: 'On Premium, different AI models consume credits proportionally based on provider computation: Google Gemini (1 credit/run), xAI Grok (2 credits/run), OpenAI GPT-4o (4 credits/run), and Anthropic Claude 3.7 (5 credits/run). You can also switch to BYOK anytime in settings.',
+      q: 'Which AI models can I use inside my workflows?',
+      a: 'Workly natively supports xAI Grok-2, Anthropic Claude 3.7 & 3.5 Sonnet, OpenAI GPT-4o & o3-mini, and Google Gemini 2.5 Pro & Flash. You can configure your keys in settings or use default intelligent orchestration.',
     },
     {
       q: 'How are sensitive credentials and internal networks protected?',
       a: 'All outbound HTTP actions pass through an automated SSRF firewall blocking private subnets (127.0.0.1, 10.0.0.0/8, 192.168.0.0/16, cloud metadata). Stored API keys are encrypted at rest with AES-256-GCM and automatically redacted from execution logs.',
+    },
+    {
+      q: 'Can I pass dynamic data between different steps?',
+      a: 'Yes. Workly features an interactive variable picker. You can reference any previous node output or webhook trigger payload using variables like {{trigger.email}}, {{node_ai.score}}, or {{node_http.data.id}} seamlessly.',
     },
   ];
 
@@ -77,14 +75,14 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
             <Link href="/signup">
               <Button size="lg" className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 shadow-xl shadow-indigo-600/25">
-                <span>Start Free Starter Plan</span>
+                <span>Start Building Workflows</span>
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>
 
-            <a href="#pricing">
+            <a href="#how-it-works">
               <Button size="lg" variant="secondary" className="w-full sm:w-auto border-slate-700 light:border-slate-300">
-                <span>View Pricing & Plans</span>
+                <span>See How It Works</span>
               </Button>
             </a>
           </div>
@@ -188,119 +186,116 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Section: Pricing & Plans */}
-      <section id="pricing" className="py-20 px-6 max-w-7xl mx-auto border-t border-slate-800/80 light:border-slate-200">
+      {/* Section: How It Works */}
+      <section id="how-it-works" className="py-20 px-6 max-w-7xl mx-auto border-t border-slate-800/80 light:border-slate-200">
         <div className="text-center space-y-3 mb-14">
-          <Badge variant="primary">Transparent SaaS Pricing</Badge>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white light:text-slate-900 tracking-tight">
-            Flexible plans for every stage
+          <Badge variant="primary">Seamless Orchestration</Badge>
+          <h2 className="text-3xl font-extrabold text-white light:text-slate-900 tracking-tight">
+            How Workly executes real work
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400 light:text-slate-600 max-w-md mx-auto">
-            Start for free with manual automations, or supercharge with BYOK keys and managed cloud AI.
+          <p className="text-xs text-slate-400 light:text-slate-600 max-w-md mx-auto">
+            From natural language prompt to live production execution in minutes.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Plan 1: Free Starter */}
-          <div className="p-7 rounded-3xl bg-slate-900/70 light:bg-white border border-slate-800/80 light:border-slate-200 shadow-xl flex flex-col justify-between">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Starter</span>
-              <h3 className="text-xl font-bold text-white light:text-slate-900 mt-1">Free Starter</h3>
-              <p className="text-xs text-slate-400 light:text-slate-600 mt-1">For basic manual and webhook automations.</p>
-
-              <div className="flex items-baseline gap-1 my-5">
-                <span className="text-4xl font-black text-white light:text-slate-900">$0</span>
-                <span className="text-xs text-slate-400 light:text-slate-600">/ month forever</span>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[
+            {
+              step: '01',
+              title: 'Describe or Design',
+              desc: 'Use AI natural language prompt or drag-and-drop nodes on the visual React Flow canvas.',
+              icon: Sparkles,
+            },
+            {
+              step: '02',
+              title: 'Bind Live Variables',
+              desc: 'Pass data seamlessly with {{trigger.email}} or prior node output variables into downstream actions.',
+              icon: Layers,
+            },
+            {
+              step: '03',
+              title: 'Real-World Execution',
+              desc: 'Execute real HTTP requests, send emails, run LLM queries, and evaluate conditions with SSRF safety.',
+              icon: Zap,
+            },
+            {
+              step: '04',
+              title: 'Audit & Telemetry',
+              desc: 'Inspect step-by-step inputs, outputs, execution latencies, and retry failed steps with one click.',
+              icon: Activity,
+            },
+          ].map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={idx}
+                className="p-6 rounded-3xl bg-slate-900/60 light:bg-white border border-slate-800 light:border-slate-200 hover:border-indigo-500/40 transition-all space-y-3 relative shadow-sm"
+              >
+                <span className="text-2xl font-black text-slate-700 light:text-slate-300 font-mono">{item.step}</span>
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 light:bg-indigo-50 text-indigo-400 light:text-indigo-600 flex items-center justify-center border border-indigo-500/20 light:border-indigo-200">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <h3 className="text-sm font-bold text-white light:text-slate-900 tracking-tight">{item.title}</h3>
+                <p className="text-xs text-slate-400 light:text-slate-600 leading-relaxed">{item.desc}</p>
               </div>
+            );
+          })}
+        </div>
+      </section>
 
-              <div className="space-y-2.5 pt-4 border-t border-slate-800/80 light:border-slate-200 text-xs">
-                {PLAN_LIMITS.free.features.map((f, i) => (
-                  <div key={i} className="flex items-start gap-2 text-slate-300 light:text-slate-700">
-                    <span className={f.startsWith('❌') ? 'text-rose-400' : 'text-emerald-400'}>
-                      {f.startsWith('❌') ? '✕' : '✓'}
-                    </span>
-                    <span>{f.replace('❌ ', '')}</span>
-                  </div>
-                ))}
-              </div>
+      {/* Section: Features & Guarantee */}
+      <section id="features" className="py-20 px-6 max-w-7xl mx-auto border-t border-slate-800/80 light:border-slate-200">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-5">
+            <Badge variant="ai">Zero Fake Execution</Badge>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white light:text-slate-900 tracking-tight leading-tight">
+              Enterprise reliability and strict execution safety.
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 light:text-slate-600 leading-relaxed">
+              Every action in Workly connects to real server-side infrastructure. There are no placeholder simulations, no fake dashboards, and no mock success states.
+            </p>
+
+            <div className="space-y-3 pt-2">
+              {[
+                'SSRF-safe HTTP client blocking access to internal private IP ranges & cloud metadata',
+                'AES-256-GCM encrypted credential vault with automatic secret log redaction',
+                'Multi-Provider AI reasoning nodes (Grok, Claude, OpenAI, Gemini)',
+                'Conditional branching with AND/OR logic & iteration safety caps',
+              ].map((feat, i) => (
+                <div key={i} className="flex items-start gap-2.5 text-xs text-slate-300 light:text-slate-700">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>{feat}</span>
+                </div>
+              ))}
             </div>
 
-            <div className="mt-8 pt-4 border-t border-slate-800/80 light:border-slate-200">
+            <div className="pt-4">
               <Link href="/signup">
-                <Button size="md" variant="secondary" className="w-full">
-                  <span>Sign Up Free</span>
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          {/* Plan 2: Pro BYOK */}
-          <div className="p-7 rounded-3xl bg-indigo-950/40 light:bg-indigo-50/70 border-2 border-indigo-500/60 shadow-2xl flex flex-col justify-between relative ring-1 ring-indigo-500/40">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span className="bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
-                Most Popular
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 light:text-indigo-600">BYOK API Keys</span>
-              <h3 className="text-xl font-bold text-white light:text-slate-900 mt-1">Pro Plan</h3>
-              <p className="text-xs text-slate-300 light:text-slate-600 mt-1">Add your own API keys for unlimited AI workflows.</p>
-
-              <div className="flex items-baseline gap-1 my-5">
-                <span className="text-4xl font-black text-white light:text-slate-900">$10</span>
-                <span className="text-xs text-slate-400 light:text-slate-600">/ month</span>
-              </div>
-
-              <div className="space-y-2.5 pt-4 border-t border-indigo-500/20 text-xs">
-                {PLAN_LIMITS.pro.features.map((f, i) => (
-                  <div key={i} className="flex items-start gap-2 text-slate-200 light:text-slate-800">
-                    <span className="text-emerald-400 font-bold">✓</span>
-                    <span>{f}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-8 pt-4 border-t border-indigo-500/20">
-              <Link href="/signup">
-                <Button size="md" className="w-full bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/30">
-                  <span>Get Started with Pro</span>
+                <Button size="md">
+                  <span>Explore Visual Builder</span>
                   <ArrowRight className="w-4 h-4 ml-1.5" />
                 </Button>
               </Link>
             </div>
           </div>
 
-          {/* Plan 3: Premium Managed AI */}
-          <div className="p-7 rounded-3xl bg-slate-900/70 light:bg-white border border-slate-800/80 light:border-slate-200 shadow-xl flex flex-col justify-between">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">All-Inclusive AI</span>
-              <h3 className="text-xl font-bold text-white light:text-slate-900 mt-1">Premium Plan</h3>
-              <p className="text-xs text-slate-400 light:text-slate-600 mt-1">Managed AI cloud without requiring your own keys.</p>
-
-              <div className="flex items-baseline gap-1 my-5">
-                <span className="text-4xl font-black text-white light:text-slate-900">$50</span>
-                <span className="text-xs text-slate-400 light:text-slate-600">/ month</span>
-              </div>
-
-              <div className="space-y-2.5 pt-4 border-t border-slate-800/80 light:border-slate-200 text-xs">
-                {PLAN_LIMITS.premium.features.map((f, i) => (
-                  <div key={i} className="flex items-start gap-2 text-slate-300 light:text-slate-700">
-                    <span className="text-emerald-400 font-bold">✓</span>
-                    <span>{f}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="p-6 rounded-3xl bg-slate-900/80 light:bg-white border border-slate-800 light:border-slate-200 shadow-2xl space-y-4">
+            <h4 className="text-xs font-bold text-slate-400 light:text-slate-600 uppercase tracking-wider">
+              Sample AI Lead Pipeline
+            </h4>
+            <div className="p-4 rounded-2xl bg-slate-950 light:bg-slate-100 border border-slate-800 light:border-slate-200 font-mono text-xs text-indigo-300 light:text-indigo-700 space-y-1">
+              <p className="text-slate-500">// Natural Language Prompt:</p>
+              <p className="text-white light:text-slate-900">
+                &ldquo;Whenever I receive a lead through webhook, analyze lead quality with AI. If score &gt; 70, send an email and post to CRM.&rdquo;
+              </p>
             </div>
 
-            <div className="mt-8 pt-4 border-t border-slate-800/80 light:border-slate-200">
-              <Link href="/signup">
-                <Button size="md" variant="secondary" className="w-full">
-                  <span>Get Premium Plan</span>
-                  <ArrowRight className="w-4 h-4 ml-1.5" />
-                </Button>
-              </Link>
+            <div className="p-4 rounded-2xl bg-slate-950 light:bg-slate-100 border border-slate-800 light:border-slate-200 font-mono text-[11px] text-cyan-300 light:text-cyan-700 overflow-x-auto max-h-48">
+              <p className="text-emerald-400 light:text-emerald-600">✓ Schema Validated: 5 Nodes, 4 Edges</p>
+              <p className="text-slate-400 light:text-slate-600">✓ Webhook token generated</p>
+              <p className="text-slate-400 light:text-slate-600">✓ Prompt synthesized</p>
+              <p className="text-slate-400 light:text-slate-600">✓ SSRF URL checks verified</p>
+              <p className="text-purple-400 light:text-purple-600">Ready for real-time execution.</p>
             </div>
           </div>
         </div>
@@ -338,6 +333,26 @@ export default function LandingPage() {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* Final CTA Banner */}
+      <section className="py-20 px-6 max-w-7xl mx-auto">
+        <div className="p-10 rounded-3xl bg-gradient-to-r from-indigo-900/60 via-purple-900/50 to-slate-900 border border-indigo-500/30 text-center space-y-6 shadow-2xl">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Ready to automate real work with AI?
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto leading-relaxed">
+            Create workflows in minutes, test them on the visual canvas, and deploy with confidence.
+          </p>
+          <div className="pt-2">
+            <Link href="/signup">
+              <Button size="lg" className="bg-indigo-600 hover:bg-indigo-500 shadow-xl shadow-indigo-600/25">
+                <span>Start Building Workflows</span>
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 

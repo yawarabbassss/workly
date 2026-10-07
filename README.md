@@ -1,6 +1,8 @@
 # Workly - Production-Ready AI Workflow Automation SaaS
 
-![Workly Banner](public/banner.png)
+<p align="center">
+  <img src="public/banner.svg" alt="Workly Banner" width="100%" />
+</p>
 
 > **Build AI workflows that actually get things done.**
 > Tell it what you want automated → build the workflow visually or with AI → execute real actions automatically through connected services → monitor the live audit trail.
@@ -100,10 +102,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🧪 Testing the End-to-End Critical Flow
 
-1. **Sign Up / Quick Demo**: Click **Quick Demo Login** on the login screen or register an account.
-2. **AI Workflow Builder**: Click **Build with Grok AI** and enter:
-   > *"Whenever I receive a lead through webhook, analyze lead quality with Grok. If score > 70, send an email alert and sync to CRM."*
-3. **Inspect Canvas**: View the generated nodes and connection edges on the interactive canvas.
+1. **Create an Account**: Register a new account on the signup page.
+2. **AI Workflow Builder**: Click **Build with AI** and enter:
+   > *"Whenever I receive a lead through webhook, analyze lead quality with AI. If score > 70, send an email alert and sync to CRM."*
+3. **Inspect Canvas**: View the generated nodes and connection edges on the interactive React Flow canvas.
 4. **Copy Webhook URL**: Select the Webhook Trigger node and copy your unique webhook URL.
 5. **Send Webhook Request**:
    ```bash

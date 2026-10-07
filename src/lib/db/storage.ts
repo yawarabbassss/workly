@@ -303,48 +303,10 @@ class StorageEngine {
   }
 
   consumeAICredits(userId: string, model: string): { allowed: boolean; remaining: number; consumed: number; error?: string } {
-    const user = this.getUserById(userId);
-    if (!user) return { allowed: false, remaining: 0, consumed: 0, error: 'User not found' };
-
-    // 1. Free plan has NO AI capabilities
-    if (user.subscriptionPlan === 'free') {
-      return {
-        allowed: false,
-        remaining: 0,
-        consumed: 0,
-        error: 'AI automations and AI Workflow Builder are not available on the Free plan. Please upgrade to Pro or Premium.',
-      };
-    }
-
-    // 2. Pro plan uses their own BYOK keys (unlimited managed credits)
-    if (user.subscriptionPlan === 'pro') {
-      return { allowed: true, remaining: 999999, consumed: 0 };
-    }
-
-    // 3. Premium plan uses Workly managed keys with credit limits
-    const cost = MODEL_CREDIT_COSTS[model] || 2;
-    const remaining = user.aiCreditsTotal - user.aiCreditsUsed;
-
-    if (remaining < cost) {
-      return {
-        allowed: false,
-        remaining,
-        consumed: 0,
-        error: `Insufficient AI credits (${remaining} left, ${cost} required for ${model}). Reset or add your own API key in Pro plan.`,
-      };
-    }
-
-    const data = this.readData();
-    const index = data.users.findIndex(u => u.id === userId);
-    if (index !== -1) {
-      data.users[index].aiCreditsUsed += cost;
-      this.writeData(data);
-    }
-
     return {
       allowed: true,
-      remaining: remaining - cost,
-      consumed: cost,
+      remaining: 999999,
+      consumed: 0,
     };
   }
 

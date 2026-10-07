@@ -1,12 +1,8 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
-import { Sparkles, Bot, Wand2, Send, CheckCircle2, AlertCircle, ArrowRight, Lock, Zap } from 'lucide-react';
+import { Sparkles, Bot, Wand2, Send, AlertCircle, ArrowRight } from 'lucide-react';
 import { WorkflowDefinition } from '@/lib/types/workflow';
-import Link from 'next/link';
 
 interface AiWorkflowModalProps {
   isOpen: boolean;
@@ -165,88 +161,39 @@ export function AiWorkflowModal({
       description="Multi-Provider AI Intelligence (Grok-2, Claude 3.7, GPT-4o, Gemini 2.5)"
       maxWidth="2xl"
     >
-      {/* Plan Status Banner */}
-      <div className="mb-4 flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="text-slate-400">Current Plan:</span>
-          <Badge variant={isFreePlan ? 'neutral' : 'primary'} size="sm">
-            {plan.toUpperCase()}
-          </Badge>
-        </div>
-
-        {isPremium && (
-          <div className="flex items-center gap-1.5 text-xs text-indigo-300 font-mono">
-            <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-            <span>{creditsRemaining} / {userProfile?.aiCreditsTotal || 1000} AI Credits Remaining</span>
-          </div>
-        )}
-
-        {plan === 'pro' && (
-          <span className="text-[11px] text-emerald-400 font-medium">
-            ✓ Unlimited BYOK Keys Active
-          </span>
-        )}
+      {/* Tabs */}
+      <div className="flex border-b border-slate-800 mb-4">
+        <button
+          onClick={() => setActiveTab('build')}
+          className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+            activeTab === 'build'
+              ? 'border-indigo-500 text-indigo-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Generate New Workflow
+        </button>
+        <button
+          onClick={() => setActiveTab('edit')}
+          className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+            activeTab === 'edit'
+              ? 'border-indigo-500 text-indigo-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Modify Existing Canvas
+        </button>
+        <button
+          onClick={() => setActiveTab('assistant')}
+          className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+            activeTab === 'assistant'
+              ? 'border-indigo-500 text-indigo-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          AI Co-Pilot Chat
+        </button>
       </div>
-
-      {/* Free Plan Lockout Warning */}
-      {isFreePlan ? (
-        <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-950/60 to-purple-950/40 border border-indigo-500/30 text-center space-y-4 my-2">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto border border-indigo-500/30">
-            <Lock className="w-6 h-6" />
-          </div>
-          <div>
-            <h4 className="text-base font-bold text-white">AI Features are Locked on the Free Plan</h4>
-            <p className="text-xs text-slate-300 max-w-md mx-auto mt-1 leading-relaxed">
-              The Free Starter plan allows building manual workflows. Upgrade to <strong>Pro ($10/mo)</strong> to use your own API keys, or <strong>Premium ($50/mo)</strong> for managed cloud AI credits.
-            </p>
-          </div>
-          <div className="flex justify-center gap-3 pt-1">
-            <Link href="/settings">
-              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500">
-                <span>Upgrade to Pro ($10/mo)</span>
-                <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-              </Button>
-            </Link>
-            <Button size="sm" variant="ghost" onClick={onClose}>
-              Build Manually on Canvas
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Tabs */}
-          <div className="flex border-b border-slate-800 mb-4">
-            <button
-              onClick={() => setActiveTab('build')}
-              className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-                activeTab === 'build'
-                  ? 'border-indigo-500 text-indigo-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Generate New Workflow
-            </button>
-            <button
-              onClick={() => setActiveTab('edit')}
-              className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-                activeTab === 'edit'
-                  ? 'border-indigo-500 text-indigo-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Modify Existing Canvas
-            </button>
-            <button
-              onClick={() => setActiveTab('assistant')}
-              className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-                activeTab === 'assistant'
-                  ? 'border-indigo-500 text-indigo-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              AI Co-Pilot Chat
-            </button>
-          </div>
 
           {error && (
             <div className="p-3 mb-4 rounded-xl bg-rose-950/50 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
@@ -380,8 +327,6 @@ export function AiWorkflowModal({
               </div>
             </div>
           )}
-        </>
-      )}
     </Modal>
   );
 }
