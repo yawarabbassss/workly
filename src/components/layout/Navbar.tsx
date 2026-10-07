@@ -19,8 +19,6 @@ export function Navbar() {
         <nav className="hidden md:flex items-center gap-8 text-xs font-semibold text-slate-300 light:text-slate-600">
           <a href="#how-it-works" className="hover:text-white light:hover:text-slate-900 transition-colors">How It Works</a>
           <a href="#features" className="hover:text-white light:hover:text-slate-900 transition-colors">Visual Engine</a>
-          <a href="#pricing" className="hover:text-white light:hover:text-slate-900 transition-colors">Pricing & Plans</a>
-          <a href="#integrations" className="hover:text-white light:hover:text-slate-900 transition-colors">Integrations</a>
           <a href="#faq" className="hover:text-white light:hover:text-slate-900 transition-colors">FAQ</a>
         </nav>
 

@@ -97,10 +97,10 @@ export default function SignupPage() {
           <div className="p-3 rounded-xl bg-indigo-950/40 light:bg-indigo-50 border border-indigo-500/20 text-[11px] text-indigo-300 light:text-indigo-700 space-y-1">
             <p className="font-semibold flex items-center gap-1">
               <Check className="w-3.5 h-3.5" />
-              <span>Includes Free Starter Plan:</span>
+              <span>Full Platform Access Included:</span>
             </p>
             <p className="text-slate-400 light:text-slate-600">
-              3 Workflows, 100 Executions/mo, Webhooks, HTTP & Email triggers.
+              Visual Canvas, Multi-LLM Reasoning, Webhook Triggers, HTTP & Email Actions.
             </p>
           </div>
 

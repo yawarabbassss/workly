@@ -17,7 +17,6 @@ export function Footer() {
         <div className="flex flex-wrap items-center justify-center gap-6 text-slate-400 light:text-slate-600 font-medium">
           <a href="#how-it-works" className="hover:text-white light:hover:text-slate-900 transition-colors">How It Works</a>
           <a href="#features" className="hover:text-white light:hover:text-slate-900 transition-colors">Visual Engine</a>
-          <a href="#pricing" className="hover:text-white light:hover:text-slate-900 transition-colors">Pricing & Plans</a>
           <a href="#faq" className="hover:text-white light:hover:text-slate-900 transition-colors">FAQ</a>
           <Link href="/login" className="hover:text-white light:hover:text-slate-900 transition-colors">Sign In</Link>
           <Link href="/signup" className="hover:text-indigo-400 light:hover:text-indigo-600 font-semibold transition-colors">Create Account</Link>
